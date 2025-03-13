@@ -1,6 +1,6 @@
 import os
 from app import app, db, login_manager
-from flask import render_template, request, redirect, url_for, flash, session, abort
+from flask import Flask, render_template, request, redirect, url_for, flash, session, abort, send_from_directory
 from flask_login import login_user, logout_user, current_user, login_required
 from werkzeug.utils import secure_filename
 from werkzeug.security import check_password_hash  
@@ -11,6 +11,9 @@ from app.forms import LoginForm, UploadForm
 ###
 # Routing for your application.
 ###
+
+app = Flask(__name__)
+UPLOAD_FOLDER = os.path.join(os.getcwd(), "uploads")
 
 @app.route('/')
 def home():
@@ -59,6 +62,24 @@ def login():
 @login_manager.user_loader
 def load_user(id):
     return db.session.execute(db.select(UserProfile).filter_by(id=id)).scalar()
+
+def get_uploaded_images():
+    """Retrieve the list of uploaded image filenames."""
+    if not os.path.exists(UPLOAD_FOLDER):
+        return []
+    return [f for f in os.listdir(UPLOAD_FOLDER) if f.lower().endswith(('.png', '.jpg', '.jpeg', '.gif'))]
+
+@app.route("/uploads/<filename>")
+def get_image(filename):
+    """Serve images from the uploads folder."""
+    return send_from_directory(UPLOAD_FOLDER, filename)
+
+@app.route("/files")
+@login_required
+def files():
+    """Display uploaded images in an HTML template."""
+    images = get_uploaded_images()
+    return render_template("files.html", images=images)
 
 ###
 # The functions below should be applicable to all Flask apps.
