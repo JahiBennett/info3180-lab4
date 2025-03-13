@@ -1,5 +1,5 @@
 from . import db
-
+from sqlalchemy import Unicode
 
 class UserProfile(db.Model):
     # You can use this to change the table name. The default convention is to use
@@ -24,7 +24,7 @@ class UserProfile(db.Model):
 
     def get_id(self):
         try:
-            return unicode(self.id)  # python 2 support
+            return Unicode(self.id)  # python 2 support
         except NameError:
             return str(self.id)  # python 3 support
 
