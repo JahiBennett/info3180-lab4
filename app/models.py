@@ -19,7 +19,7 @@ class UserProfile(db.Model):
         self.first_name = first_name
         self.last_name = last_name
         self.username = username
-        self.password = generate_password_hash(password)  # Hashing password before storage
+        self.password = password  
 
 
     def is_authenticated(self):
