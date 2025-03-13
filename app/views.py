@@ -3,8 +3,9 @@ from app import app, db, login_manager
 from flask import render_template, request, redirect, url_for, flash, session, abort
 from flask_login import login_user, logout_user, current_user, login_required
 from werkzeug.utils import secure_filename
-from app.models import UserProfile
-from app.forms import LoginForm
+from werkzeug.security import check_password_hash  
+from app.models import UserProfile  
+from app.forms import LoginForm, UploadForm
 
 
 ###
@@ -24,40 +25,42 @@ def about():
 
 
 @app.route('/upload', methods=['POST', 'GET'])
+@login_required  # Ensure user is logged in before accessing upload
 def upload():
-    # Instantiate your form class
+    """Upload route for logged-in users."""
+    form = UploadForm()  # Instantiate the UploadForm
 
-    # Validate file upload on submit
-    if form.validate_on_submit():
-        # Get file data and save to your uploads folder
+    if form.validate_on_submit():  # Validate form submission
+        file = form.file.data  # Get uploaded file
+        filename = secure_filename(file.filename)  # Sanitize filename
+        file.save(os.path.join('uploads', filename))  # Save file to uploads folder
 
-        flash('File Saved', 'success')
-        return redirect(url_for('home')) # Update this to redirect the user to a route that displays all uploaded image files
+        flash('File uploaded successfully!', 'success')
+        return redirect(url_for('home'))  # Update this to display all uploaded files
 
-    return render_template('upload.html')
+    return render_template('upload.html', form=form)
 
 
-@app.route('/login', methods=['POST', 'GET'])
+@app.route('/login', methods=['GET', 'POST'])
 def login():
-    form = LoginForm()
+    """Login route to authenticate users."""
+    form = LoginForm()  # Create an instance of LoginForm
 
-    # change this to actually validate the entire form submission
-    # and not just one field
-    if form.username.data:
-        # Get the username and password values from the form.
+    if form.validate_on_submit():  # Ensure form data is valid
+        username = form.username.data
+        password = form.password.data
 
-        # Using your model, query database for a user based on the username
-        # and password submitted. Remember you need to compare the password hash.
-        # You will need to import the appropriate function to do so.
-        # Then store the result of that query to a `user` variable so it can be
-        # passed to the login_user() method below.
+        # Query the database for the user
+        user = UserProfile.query.filter_by(username=username).first()
 
-        # Gets user id, load into session
-        login_user(user)
+        if user and check_password_hash(user.password, password):  # Verify password
+            login_user(user)  # Log the user in
+            flash('Login successful!', 'success')
+            return redirect(url_for('upload'))  # Redirect to the upload page
+        else:
+            flash('Invalid username or password.', 'danger')
 
-        # Remember to flash a message to the user
-        return redirect(url_for("home"))  # The user should be redirected to the upload form instead
-    return render_template("login.html", form=form)
+    return render_template('login.html', form=form)
 
 # user_loader callback. This callback is used to reload the user object from
 # the user ID stored in the session
