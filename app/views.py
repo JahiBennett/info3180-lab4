@@ -1,7 +1,7 @@
 import os
 from app import app, db, login_manager
-from flask import Flask, render_template, request, redirect, url_for, flash, session, abort, send_from_directory
-from flask_login import login_user, logout_user, current_user, login_required
+from flask import Flask, render_template, redirect, url_for, flash, send_from_directory
+from flask_login import login_user, logout_user, login_required
 from werkzeug.utils import secure_filename
 from werkzeug.security import check_password_hash  
 from app.models import UserProfile  
@@ -56,6 +56,13 @@ def login():
         else:
             flash("Invalid username or password.", "danger")
     return render_template("login.html", form=form)
+
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    flash('You have been logged out.', 'info')
+    return redirect(url_for('home'))
 
 # user_loader callback. This callback is used to reload the user object from
 # the user ID stored in the session
