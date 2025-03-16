@@ -12,8 +12,9 @@ from app.forms import LoginForm, UploadForm
 # Routing for your application.
 ###
 
-app = Flask(__name__)
-UPLOAD_FOLDER = os.path.join(os.getcwd(), "uploads")
+# Ensure the upload folder exists
+if not os.path.exists(app.config['UPLOAD_FOLDER']):
+    os.makedirs(app.config['UPLOAD_FOLDER'])
 
 @app.route('/')
 def home():
@@ -24,7 +25,7 @@ def home():
 @app.route('/about/')
 def about():
     """Render the website's about page."""
-    return render_template('about.html', name="Mary Jane")
+    return render_template('about.html', name="Jahi Bennett")
 
 
 @app.route('/upload', methods=['POST', 'GET'])
@@ -72,14 +73,14 @@ def load_user(id):
 
 def get_uploaded_images():
     """Retrieve the list of uploaded image filenames."""
-    if not os.path.exists(UPLOAD_FOLDER):
+    if not os.path.exists(app.config['UPLOAD_FOLDER']):
         return []
-    return [f for f in os.listdir(UPLOAD_FOLDER) if f.lower().endswith(('.png', '.jpg', '.jpeg', '.gif'))]
+    return [f for f in os.listdir(app.config['UPLOAD_FOLDER']) if f.lower().endswith(('.png', '.jpg', '.jpeg', '.gif'))]
 
 @app.route("/uploads/<filename>")
 def get_image(filename):
     """Serve images from the uploads folder."""
-    return send_from_directory(UPLOAD_FOLDER, filename)
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
 @app.route("/files")
 @login_required
